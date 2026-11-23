@@ -1,96 +1,69 @@
-import json
 import os
+from typing import Dict, List
 import requests
 
-API_KEY = os.getenv("GEMINI_API_KEY")
-DEFAULT_MODEL = "gemini-2.5-flash"
-BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
+from prompts import SYSTEM_INSTRUCTION, build_inventory_prompt
 
 
-def _call_gemini(prompt: str, temperature: float = 0.2, json_mode: bool = False) -> dict:
-    if not API_KEY:
-        return {"ok": False, "text": "", "error": "GEMINI_API_KEY is not set."}
+class AIAssistant:
+    def __init__(self, model: str | None = None) -> None:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise EnvironmentError("GEMINI_API_KEY environment variable is not set.")
+        self.api_key = api_key
+        raw_model = model or os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+        self.model = raw_model.removeprefix("models/")
+        self.endpoint = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{self.model}:generateContent"
+        )
 
-    url = f"{BASE_URL}/{DEFAULT_MODEL}:generateContent?key={API_KEY}"
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": temperature},
-    }
-    if json_mode:
-        payload["generationConfig"]["responseMimeType"] = "application/json"
+    def ask(
+        self,
+        user_message: str,
+        inventory_context: str,
+        past_history: List[Dict[str, str]],
+    ) -> str:
+        contents: List[dict] = []
 
-    try:
-        resp = requests.post(url, json=payload, timeout=30)
-        resp.raise_for_status()
-        body = resp.json()
-        candidates = body.get("candidates") or []
-        parts = (candidates[0].get("content") or {}).get("parts") or []
-        text = "".join(p.get("text", "") for p in parts).strip()
-        if not text:
-            return {"ok": False, "text": "", "error": "Empty response from Gemini."}
-        return {"ok": True, "text": text, "error": None}
-    except Exception as exc:
-        return {"ok": False, "text": "", "error": str(exc)}
+        for turn in past_history:
+            role = "user" if turn["role"] == "user" else "model"
+            contents.append({
+                "role": role,
+                "parts": [{"text": turn["text"]}],
+            })
 
+        prompt_with_context = build_inventory_prompt(user_message, inventory_context)
+        contents.append({
+            "role": "user",
+            "parts": [{"text": prompt_with_context}],
+        })
 
-def extract_intent(prompt: str, mock: bool = False) -> dict:
-    if mock or not API_KEY:
-        return {
-            "ok": True,
-            "action": "check_stock",
-            "item": "sample_item",
-            "quantity": 1,
-            "error": None,
+        payload = {
+            "systemInstruction": {
+                "parts": [{"text": SYSTEM_INSTRUCTION}]
+            },
+            "contents": contents,
+            "generationConfig": {
+                "temperature": 0.3,
+            },
         }
 
-    res = _call_gemini(prompt, temperature=0.0, json_mode=True)
-    if not res["ok"]:
-        return {
-            "ok": False,
-            "action": "unknown",
-            "item": None,
-            "quantity": None,
-            "error": res["error"],
-        }
+        response = requests.post(
+            self.endpoint,
+            headers={
+                "x-goog-api-key": self.api_key,
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=60,
+        )
+        response.raise_for_status()
+        data = response.json()
 
-    try:
-        data = json.loads(res["text"])
-        return {
-            "ok": True,
-            "action": data.get("action", "unknown"),
-            "item": data.get("item"),
-            "quantity": data.get("quantity"),
-            "error": None,
-        }
-    except json.JSONDecodeError:
-        return {
-            "ok": False,
-            "action": "unknown",
-            "item": None,
-            "quantity": None,
-            "error": "Model returned invalid JSON.",
-        }
-
-
-def generate_response(prompt: str, mock: bool = False) -> dict:
-    if mock or not API_KEY:
-        return {
-            "ok": True,
-            "reply": "[MOCK AI REPLY] Inventory data received and processed.",
-            "error": None,
-        }
-
-    res = _call_gemini(prompt, temperature=0.3, json_mode=False)
-    if not res["ok"]:
-        return {
-            "ok": False,
-            "reply": "Sorry, the AI assistant is temporarily unavailable. Please try again.",
-            "error": res["error"],
-        }
-
-    return {"ok": True, "reply": res["text"], "error": None}
-
-
-if __name__ == "__main__":
-    print("Intent test:", extract_intent("Check stock for sugar", mock=True))
-    print("Reply test:", generate_response("We have 12 packets of sugar.", mock=True))
+        candidates = data.get("candidates", [])
+        if not candidates:
+            return "No response generated."
+        parts = candidates[0].get("content", {}).get("parts", [])
+        texts = [p.get("text", "") for p in parts if "text" in p]
+        return "\n".join(texts).strip() or "No response generated."
