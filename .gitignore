@@ -1,0 +1,17 @@
+
+# Python virtual environment
+.venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Environment variables and API keys
+.env
+
+# Generated session files
+sessions/*.json
+
+# Local shop data
+inventory.json
+activity_log.json
