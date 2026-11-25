@@ -1,0 +1,117 @@
+{
+    "session_date": "2026-11-23T19:29:45",
+    "model": "gemini-3.5-flash-lite",
+    "conversation": [
+        {
+            "timestamp": "2026-11-23T19:25:43",
+            "user_message": "sell 3 packets of rice",
+            "ai_reply": "Sawa, nimeandika mauzo ya rice.\n\nInventory results:\nSold 3 packets of rice. Remaining stock: 4 packets.",
+            "actions": [
+                {
+                    "action": "record_sale",
+                    "product": "rice",
+                    "quantity": 3,
+                    "unit": "packets"
+                }
+            ],
+            "action_results": [
+                "Sold 3 packets of rice. Remaining stock: 4 packets."
+            ],
+            "inventory_after": {
+                "maize flour": {
+                    "quantity": 23,
+                    "unit": "packets",
+                    "reorder_level": 5
+                },
+                "rice": {
+                    "quantity": 4,
+                    "unit": "packets",
+                    "reorder_level": 5
+                }
+            }
+        },
+        {
+            "timestamp": "2026-11-23T19:26:16",
+            "user_message": "Check the rice stock in the store",
+            "ai_reply": "Sawa, acha niangalie stock ya rice.\n\nInventory results:\n- Rice: 4 packets (reorder level: 5)",
+            "actions": [
+                {
+                    "action": "check_stock",
+                    "product": "rice",
+                    "quantity": 0,
+                    "unit": "packets"
+                }
+            ],
+            "action_results": [
+                "- Rice: 4 packets (reorder level: 5)"
+            ],
+            "inventory_after": {
+                "maize flour": {
+                    "quantity": 23,
+                    "unit": "packets",
+                    "reorder_level": 5
+                },
+                "rice": {
+                    "quantity": 4,
+                    "unit": "packets",
+                    "reorder_level": 5
+                }
+            }
+        },
+        {
+            "timestamp": "2026-11-23T19:29:26",
+            "user_message": "Which products needs restocking?",
+            "ai_reply": "Sawa, hizi ndizo bidhaa zilizopungua. Kumbuka kuverify kabla ya kununua!\n\nInventory results:\nLow-stock products:\n- Rice: 4 packets (reorder level: 5)",
+            "actions": [
+                {
+                    "action": "list_low_stock",
+                    "product": "",
+                    "quantity": 0,
+                    "unit": ""
+                }
+            ],
+            "action_results": [
+                "Low-stock products:\n- Rice: 4 packets (reorder level: 5)"
+            ],
+            "inventory_after": {
+                "maize flour": {
+                    "quantity": 23,
+                    "unit": "packets",
+                    "reorder_level": 5
+                },
+                "rice": {
+                    "quantity": 4,
+                    "unit": "packets",
+                    "reorder_level": 5
+                }
+            }
+        }
+    ],
+    "summary": {
+        "overview": "In this session, one sale of rice was recorded and low-stock items were checked.",
+        "products_discussed": [
+            "rice",
+            "maize flour"
+        ],
+        "stock_changes": [
+            {
+                "type": "sale",
+                "product": "rice",
+                "quantity": 3,
+                "unit": "packets"
+            }
+        ],
+        "low_stock_alerts": [
+            {
+                "product": "rice",
+                "quantity": 4,
+                "reorder_level": 5,
+                "unit": "packets"
+            }
+        ],
+        "recommendations": [
+            "Check the shelves and verify before buying rice."
+        ],
+        "notes": []
+    }
+}
