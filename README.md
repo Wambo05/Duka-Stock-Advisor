@@ -1,6 +1,8 @@
 # DUKA Stock Advisor
 
-**GitHub repository:** [Duka Stock Advisor](https://github.com/Wambo05/Duka-Stock-Advisor)
+**GitHub repository:** [wca-ai-tool-s12-PyNova
+](https://github.com/Wambo05/wca-ai-tool-s12-PyNova
+)
 
 ## Group members
 
